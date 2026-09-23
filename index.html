@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineLibrary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <svg class="brand-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="10" width="40" height="28" rx="2" stroke="currentColor" stroke-width="2"/>
+      <path d="M4 16h40M12 10v6M20 10v6M28 10v6M36 10v6" stroke="currentColor" stroke-width="2"/>
+    </svg>
+    <span class="brand-name">CineLibrary</span>
+  </div>
+  <button class="btn btn-primary" id="open-add-modal">
+    <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    Adicionar filme
+  </button>
+</header>
+
+<section class="hero">
+  <div class="hero-content">
+    <p class="hero-kicker">Seu acervo pessoal de cinema</p>
+    <h1 class="hero-title">Cada filme que passou<br>pela sua tela, guardado<br>num só lugar.</h1>
+    <p class="hero-subtitle">Cadastre, organize e revisite os títulos que marcaram sua sessão.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-value" id="stat-total">0</span>
+      <span class="stat-label">filmes catalogados</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-avg">—</span>
+      <span class="stat-label">nota média</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="stat-genres">0</span>
+      <span class="stat-label">gêneros diferentes</span>
+    </div>
+  </div>
+</section>
+
+<section class="toolbar">
+  <div class="search-field">
+    <svg viewBox="0 0 20 20" fill="none" width="17" height="17"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M14 14l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <input type="text" id="search-input" placeholder="Buscar por título ou diretor...">
+  </div>
+  <div class="filter-field">
+    <select id="genre-filter">
+      <option value="">Todos os gêneros</option>
+    </select>
+  </div>
+  <div class="filter-field">
+    <select id="sort-select">
+      <option value="recent">Mais recentes</option>
+      <option value="rating-desc">Melhor avaliados</option>
+      <option value="year-desc">Ano (mais novo)</option>
+      <option value="year-asc">Ano (mais antigo)</option>
+      <option value="title-asc">Título (A–Z)</option>
+    </select>
+  </div>
+</section>
+
+<main class="catalog-wrap">
+  <div id="loading-state" class="empty-state">
+    <p>Carregando seu acervo...</p>
+  </div>
+
+  <div id="empty-state" class="empty-state" hidden>
+    <svg viewBox="0 0 64 64" fill="none" width="48" height="48"><rect x="8" y="14" width="48" height="36" rx="3" stroke="currentColor" stroke-width="2"/><path d="M8 22h48M18 14v8M28 14v8M38 14v8M48 14v8" stroke="currentColor" stroke-width="2"/></svg>
+    <h3>A sala ainda está vazia</h3>
+    <p>Adicione o primeiro filme para começar seu catálogo.</p>
+    <button class="btn btn-primary" id="empty-add-btn">Adicionar filme</button>
+  </div>
+
+  <div id="no-results-state" class="empty-state" hidden>
+    <p>Nenhum filme encontrado com esses filtros.</p>
+  </div>
+
+  <div class="catalog-grid" id="catalog-grid"></div>
+</main>
+
+<footer class="site-footer">
+  <p>CineLibrary — projeto acadêmico integrado ao Supabase.</p>
+</footer>
+
+<!-- Modal: adicionar/editar filme -->
+<div class="modal-overlay" id="form-modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <h2 id="modal-title">Adicionar filme</h2>
+      <button class="icon-btn" id="close-form-modal" aria-label="Fechar">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <form id="movie-form" class="modal-body">
+      <input type="hidden" id="movie-id">
+
+      <div class="field-group">
+        <label for="input-titulo">Título *</label>
+        <input type="text" id="input-titulo" required maxlength="200" placeholder="Ex: Cidade de Deus">
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label for="input-ano">Ano de lançamento</label>
+          <input type="number" id="input-ano" min="1888" max="2100" placeholder="2002">
+        </div>
+        <div class="field-group">
+          <label for="input-duracao">Duração (min)</label>
+          <input type="number" id="input-duracao" min="1" max="1000" placeholder="130">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label for="input-genero">Gênero</label>
+          <input type="text" id="input-genero" list="genero-sugestoes" placeholder="Drama">
+          <datalist id="genero-sugestoes">
+            <option value="Ação"></option>
+            <option value="Aventura"></option>
+            <option value="Animação"></option>
+            <option value="Comédia"></option>
+            <option value="Documentário"></option>
+            <option value="Drama"></option>
+            <option value="Fantasia"></option>
+            <option value="Ficção científica"></option>
+            <option value="Romance"></option>
+            <option value="Suspense"></option>
+            <option value="Terror"></option>
+            <option value="Musical"></option>
+          </datalist>
+        </div>
+        <div class="field-group">
+          <label for="input-classificacao">Classificação indicativa</label>
+          <select id="input-classificacao">
+            <option value="">Não informado</option>
+            <option value="Livre">Livre</option>
+            <option value="10">10 anos</option>
+            <option value="12">12 anos</option>
+            <option value="14">14 anos</option>
+            <option value="16">16 anos</option>
+            <option value="18">18 anos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label for="input-diretor">Diretor</label>
+          <input type="text" id="input-diretor" maxlength="150" placeholder="Fernando Meirelles">
+        </div>
+        <div class="field-group">
+          <label for="input-nota">Nota (0 a 10)</label>
+          <input type="number" id="input-nota" min="0" max="10" step="0.1" placeholder="9.0">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="input-elenco">Elenco principal</label>
+        <input type="text" id="input-elenco" placeholder="Alexandre Rodrigues, Leandro Firmino, Phellipe Haagensen">
+      </div>
+
+      <div class="field-group">
+        <label for="input-poster">URL do pôster</label>
+        <input type="url" id="input-poster" placeholder="https://exemplo.com/poster.jpg">
+      </div>
+
+      <div class="field-group">
+        <label for="input-sinopse">Sinopse</label>
+        <textarea id="input-sinopse" rows="3" maxlength="2000" placeholder="Um breve resumo da história do filme..."></textarea>
+      </div>
+
+      <p class="form-error" id="form-error" hidden></p>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancel-form-btn">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Salvar filme</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: detalhes do filme -->
+<div class="modal-overlay" id="detail-modal-overlay" hidden>
+  <div class="modal modal-detail" role="dialog" aria-modal="true">
+    <button class="icon-btn detail-close" id="close-detail-modal" aria-label="Fechar">
+      <svg viewBox="0 0 20 20" fill="none" width="18" height="18"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="detail-poster">
+      <img id="detail-poster-img" src="" alt="">
+    </div>
+    <div class="detail-content">
+      <p class="detail-genre" id="detail-genre"></p>
+      <h2 id="detail-title"></h2>
+      <p class="detail-meta" id="detail-meta"></p>
+      <div class="detail-rating" id="detail-rating"></div>
+      <p class="detail-synopsis" id="detail-synopsis"></p>
+      <dl class="detail-facts" id="detail-facts"></dl>
+      <div class="detail-actions">
+        <button class="btn btn-ghost" id="detail-edit-btn">Editar</button>
+        <button class="btn btn-danger" id="detail-delete-btn">Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmação de exclusão -->
+<div class="modal-overlay" id="confirm-modal-overlay" hidden>
+  <div class="modal modal-confirm" role="dialog" aria-modal="true">
+    <h2>Excluir filme</h2>
+    <p>Tem certeza de que deseja remover "<span id="confirm-movie-title"></span>" do seu catálogo? Essa ação não pode ser desfeita.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="confirm-cancel-btn">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-delete-btn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="script.js"></script>
+</body>
+</html>
